@@ -1299,6 +1299,7 @@ def add_request_reply(request_real_id):
         action_by = admin_data.name
         requestt = Request.query.filter_by(real_id=str(request_real_id)).all()
         react_id = React.query.filter_by(request_real_id=request_real_id , admin_id= admin_id).first()
+        print(react_id)
         react_id.action = True
         react_id.update()
         fill_request_table = Request(reply=reply,
