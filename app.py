@@ -418,45 +418,45 @@ def admin_login():
     if not (take.get('uid')):
         abort(422)
     uid = take.get('uid', "")
-    try:
-        user = Admin.query.filter_by(uid=uid).all()
-        emp = Employee.query.all()
-        req = Request.query.all()
-        q= Queue.query.all()
-        tick = Ticket.query.all()
-        dep = Department.query.all()
-        tak = Task.query.all()
-        if user :
-            if not q :
-                add_fake_title = Queue(id=1,title="deleted")
-                add_fake_title.insert()
+    # try:
+    user = Admin.query.filter_by(uid=uid).all()
+    emp = Employee.query.all()
+    req = Request.query.all()
+    q= Queue.query.all()
+    tick = Ticket.query.all()
+    dep = Department.query.all()
+    tak = Task.query.all()
+    if user :
+        if not q :
+            add_fake_title = Queue(id=1,title="deleted")
+            add_fake_title.insert()
 
-            if not dep :
-                add_fake_Department = Department(id=1,name="deleted")
-                add_fake_Department.insert()
+        if not dep :
+            add_fake_Department = Department(id=1,name="deleted")
+            add_fake_Department.insert()
 
-            if not emp :
-                add_fake_Employee = Employee(id=1,name="deleted",department_id=1)
-                add_fake_Employee.insert()
+        if not emp :
+            add_fake_Employee = Employee(id=1,name="deleted",department_id=1)
+            add_fake_Employee.insert()
 
-            if not req :
-                add_fake_Request = Request(id=1,subject="deleted",employee_id=1)
-                add_fake_Request.insert()
-            if not tick :    
-                add_fake_Ticket = Ticket(id=1,subject="deleted",employee_id=1)
-                add_fake_Ticket.insert()
+        if not req :
+            add_fake_Request = Request(id=1,subject="deleted",employee_id=1)
+            add_fake_Request.insert()
+        if not tick :    
+            add_fake_Ticket = Ticket(id=1,subject="deleted",employee_id=1)
+            add_fake_Ticket.insert()
 
-            if not tak :
-                add_fake_Task = Task(id=1,todo="deleted",queue_id=1,admin_id=1)
-                add_fake_Task.insert()
-            get_id = user[0].id
-            return jsonify({'success': True,'admin_id':get_id})
-        else:
-            return jsonify({'success': False})
+        if not tak :
+            add_fake_Task = Task(id=1,todo="deleted",queue_id=1,admin_id=1)
+            add_fake_Task.insert()
+        get_id = user[0].id
+        return jsonify({'success': True,'admin_id':get_id})
+    else:
+        return jsonify({'success': False})
 
-    except:
+    # except:
 
-        abort(422)
+    #     abort(422)
 
 @app.route('/employee_login', methods=['POST'])
 def employee_login():
