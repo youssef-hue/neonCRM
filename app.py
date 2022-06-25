@@ -1291,44 +1291,44 @@ def add_request_reply(request_real_id):
     status = 'inreview'
     request_first = Request.query.filter_by(real_id=str(request_real_id)).first()
     date = str(datetime.now())
-    try:
+    # try:
         
-        if admin_id :
-            
-            admin_data = Admin.query.get(admin_id)
-            action_by = admin_data.name
-            requestt = Request.query.filter_by(real_id=str(request_real_id)).all()
-            react_id = React.query.filter_by(request_real_id=request_real_id , admin_id= admin_id).first()
-            react_id.action = True
-            react_id.update()
-            fill_request_table = Request(reply=reply,
-                                    status=status,
-                                    subject=request_first.subject,
-                                    description=request_first.description,
-                                    employee_id = request_first.employee_id,
-                                    action_by=action_by,
-                                    date = date,
-                                    real_id=request_real_id)
-            fill_request_table.insert()
-            for i in requestt:
-                i.status= status
-                i.update()
-        else:
-            employee_name = Employee.query.get(request_first.employee_id).name
-            fill_request_table = Request(reply=reply,
-                                    status=request_first.status,
-                                    subject=request_first.subject,
-                                    description=request_first.description,
-                                    employee_id = request_first.employee_id,
-                                    action_by= employee_name,
-                                    date = date,
-                                    real_id=request_real_id)
-            fill_request_table.insert()
+    if admin_id :
+        
+        admin_data = Admin.query.get(admin_id)
+        action_by = admin_data.name
+        requestt = Request.query.filter_by(real_id=str(request_real_id)).all()
+        react_id = React.query.filter_by(request_real_id=request_real_id , admin_id= admin_id).first()
+        react_id.action = True
+        react_id.update()
+        fill_request_table = Request(reply=reply,
+                                status=status,
+                                subject=request_first.subject,
+                                description=request_first.description,
+                                employee_id = request_first.employee_id,
+                                action_by=action_by,
+                                date = date,
+                                real_id=request_real_id)
+        fill_request_table.insert()
+        for i in requestt:
+            i.status= status
+            i.update()
+    else:
+        employee_name = Employee.query.get(request_first.employee_id).name
+        fill_request_table = Request(reply=reply,
+                                status=request_first.status,
+                                subject=request_first.subject,
+                                description=request_first.description,
+                                employee_id = request_first.employee_id,
+                                action_by= employee_name,
+                                date = date,
+                                real_id=request_real_id)
+        fill_request_table.insert()
 
-        return jsonify({'success': True, "comment" : ""})
-    except:
+    return jsonify({'success': True, "comment" : ""})
+    # except:
 
-        abort(422)
+    #     abort(422)
 
 
 @app.route('/add_ticket', methods=['POST'])
