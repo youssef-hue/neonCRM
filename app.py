@@ -634,12 +634,14 @@ def show_tickets(admin_bool,user_id):
 def show_ticket(real_id):
     try:
         the_ticket = Ticket.query.filter_by(real_id=str(real_id)).order_by(asc(Ticket.date)).all()
-        
+        file = ''
         tickets = {}
 
         for tickett in the_ticket:
             if tickett.reply == None and len(the_ticket)!=1:
                 continue
+            if not tickett.file and not file:
+                file = tickett.file
             if not tickett.reply:
                 reply= 'waiting'
                 action_by ='waiting'
@@ -662,7 +664,7 @@ def show_ticket(real_id):
                 tickets[tickett.real_id] = {
                     "description": tickett.description,
                     "subject": tickett.subject,
-                    "file": tickett.file,
+                    "file": file,
                     "items_list": [
                                 {
                                 "action_by": action_by ,
@@ -1299,7 +1301,6 @@ def add_request_reply(request_real_id):
         action_by = admin_data.name
         requestt = Request.query.filter_by(real_id=str(request_real_id)).all()
         react_id = React.query.filter_by(request_real_id=request_real_id , admin_id= admin_id).first()
-        print(react_id)
         react_id.action = True
         react_id.update()
         fill_request_table = Request(reply=reply,
