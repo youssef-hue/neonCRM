@@ -481,6 +481,25 @@ def employee_login():
 # GET FUNCTIONS
 
 # __________________________________________________________________________________________
+
+@app.route('/show_departments', methods=['GET'])
+def show_departments():
+    try:
+
+        all_Departments = Department.query.order_by(asc(Department.id)).all()
+        Departments = []
+
+        for departmentt in all_Departments:
+            if departmentt.name == "deleted":
+                continue
+            Departments.append({"name":departmentt.name ,"id":departmentt.id})
+
+        return jsonify({"departments": departmentt})
+
+    except:
+
+        abort(500)
+        
 @app.route('/employee_onshift', methods=['GET'])
 def employee_onshift():
     try:
