@@ -494,12 +494,12 @@ def show_departments():
                 continue
             Departments.append({"name":departmentt.name ,"id":departmentt.id})
 
-        return jsonify({"departments": departmentt})
+        return jsonify({"departments": Departments})
 
     except:
 
         abort(500)
-        
+
 @app.route('/employee_onshift', methods=['GET'])
 def employee_onshift():
     try:
