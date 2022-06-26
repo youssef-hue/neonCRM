@@ -593,6 +593,7 @@ def show_request(real_id):
                 "user": user.name,
                 "description": requestt.description,
                 "subject": requestt.subject,
+                "real_id": requestt.real_id,
                 "items_list": [
                             {
                             "action_by": action_by,
@@ -683,6 +684,7 @@ def show_ticket(real_id):
                 tickets[tickett.real_id] = {
                     "description": tickett.description,
                     "subject": tickett.subject,
+                    "real_id": tickett.real_id,
                     "file": file,
                     "items_list": [
                                 {
