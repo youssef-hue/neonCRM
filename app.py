@@ -583,7 +583,7 @@ def show_request(real_id):
             requests[requestt.real_id]["items_list"].append(
                                                     {
                                                     "action_by": action_by,
-                                                    "reply ": reply,
+                                                    "reply": reply,
                                                     "date":date
                                                     })
 
@@ -596,7 +596,7 @@ def show_request(real_id):
                 "items_list": [
                             {
                             "action_by": action_by,
-                            "reply ": reply,
+                            "reply": reply,
                             "date": date
                             }
                             ],
@@ -673,7 +673,7 @@ def show_ticket(real_id):
                 tickets[tickett.real_id]["items_list"].append(
                                                         {
                                                         "action_by": action_by ,
-                                                        "reply ":reply ,
+                                                        "reply":reply ,
                                                         "date": date
                                                         })
                 
@@ -687,7 +687,7 @@ def show_ticket(real_id):
                     "items_list": [
                                 {
                                 "action_by": action_by ,
-                                "reply ":reply ,
+                                "reply":reply ,
                                 "date": date
                                 }
                                 ],
