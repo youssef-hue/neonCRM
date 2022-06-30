@@ -290,6 +290,11 @@ class Ticket(db.Model):
         db.session.commit()
     def format(self):
         daata = Ticket.query.filter_by(real_id=self.real_id).all()
+        dateee=[]
+        for i in daata:
+            dateee.append(i.date)
+        start_date=min(dateee)
+        end_date=max(dateee)
         for i in daata:
             if i.admin_id:
                 admin_id=i.admin_id
@@ -309,7 +314,9 @@ class Ticket(db.Model):
             "action_by":self.action_by ,
             "status":self.status ,
             "took_by":took_by ,
-            "date":self.date,
+            "type":self.type ,
+            "end_date":end_date,
+            "start_date":start_date,
             "real_id":self.real_id 
             
         }
@@ -319,6 +326,7 @@ class Ticket(db.Model):
     description = db.Column(db.String)
     action_by  = db.Column(db.String)
     status = db.Column(db.String)
+    type = db.Column(db.String)
     reply  = db.Column(db.String)
     file  = db.Column(db.String)
     real_id = db.Column(db.String)
@@ -625,7 +633,7 @@ def show_tickets(admin_bool,user_id):
                         closed.append(tickett.format())
                     if tickett.status == "pending":
                         pending.append(tickett.format()) 
-                    if tickett.status == "inreview":
+                    if tickett.status == "In Review":
                         inreview.append(tickett.format()) 
 
             return jsonify({"closed": closed,"pending": pending,"inreview": inreview})
@@ -641,7 +649,7 @@ def show_tickets(admin_bool,user_id):
                         closed.append(tickett.format())
                     if tickett.status == "pending":
                         pending.append(tickett.format()) 
-                    if tickett.status == "inreview":
+                    if tickett.status == "In Review":
                         inreview.append(tickett.format()) 
 
             return jsonify({"closed": closed,"pending": pending,"inreview": inreview})
@@ -655,8 +663,12 @@ def show_ticket(real_id):
     try:
         the_ticket = Ticket.query.filter_by(real_id=str(real_id)).order_by(asc(Ticket.date)).all()
         file = ''
+        dateee= []
         tickets = {}
-
+        for i in the_ticket:
+            dateee.append(i.date)
+        start_date=min(dateee)
+        end_date=max(dateee)
         for tickett in the_ticket:
             if tickett.reply == None and len(the_ticket)!=1:
                 continue
@@ -685,6 +697,9 @@ def show_ticket(real_id):
                     "description": tickett.description,
                     "subject": tickett.subject,
                     "real_id": tickett.real_id,
+                    "type": tickett.type,
+                    "start_date": start_date,
+                    "end_date": end_date,
                     "file": file,
                     "items_list": [
                                 {
@@ -919,7 +934,7 @@ def delete_task(real_id):
 
 # __________________________________________________________________________________________
 
-@app.route('/update_employee/<id>', methods=['POST'])
+@app.route('/update_employee/<id>', methods=['PATCH'])
 def update_employee(id):
     update = Employee.query.get(id)
 
@@ -939,7 +954,7 @@ def update_employee(id):
 
         abort(422)
 
-@app.route('/update_admin/<id>', methods=['POST'])
+@app.route('/update_admin/<id>', methods=['PATCH'])
 def update_admin(id):
     update = Admin.query.get(id)
 
@@ -959,7 +974,7 @@ def update_admin(id):
 
         abort(422)
 
-@app.route('/update_ticket_admin/<real_id>', methods=['POST'])
+@app.route('/update_ticket_admin/<real_id>', methods=['PATCH'])
 def update_ticket_admin(real_id):
     update = Ticket.query.filter_by(real_id=real_id).all()
 
@@ -1100,7 +1115,7 @@ def update_task_query(task_id):
 
         abort(422)
 
-@app.route('/update_task_status/<task_real_id>', methods=['POST'])
+@app.route('/update_task_status/<task_real_id>', methods=['PATCH'])
 def update_task_status(task_real_id):
     update = Task.query.filter_by(task_real_id=task_real_id).all()
     status = request.form.get('status', '')
@@ -1115,7 +1130,7 @@ def update_task_status(task_real_id):
         abort(422)
 
 
-@app.route('/received/<employee_id>/<task_real_id>', methods=['POST'])
+@app.route('/received/<employee_id>/<task_real_id>', methods=['PATCH'])
 def received(employee_id,task_real_id):
     update = Receive.query.filter_by(employee_id=employee_id,task_real_id=task_real_id).all()
     try:
@@ -1159,7 +1174,7 @@ def update_task_completed(task_id):
 
         abort(422)
 
-@app.route('/update_offs/<id>', methods=['POST'])
+@app.route('/update_offs/<id>', methods=['PATCH'])
 def update_offs(id):
     update = Offs.query.get(id)
     employee_id = request.form.get('employee_id', '')
@@ -1311,7 +1326,7 @@ def add_request_reply(request_real_id):
     admin_id = request.form.get('admin_id', '')
        
     reply = request.form.get('reply', '')
-    status = 'inreview'
+    status = 'In Review'
     request_first = Request.query.filter_by(real_id=str(request_real_id)).first()
     date = str(datetime.now())
     # try:
@@ -1361,6 +1376,7 @@ def add_ticket():
 
     employee_id = request.form.get('employee_id', '')
     subject = request.form.get('subject', '')
+    type = request.form.get('type', '')
     description = request.form.get('description', '')
     try:
         file = request.files['file']
@@ -1380,6 +1396,7 @@ def add_ticket():
     fill_Ticket_table = Ticket(employee_id=employee_id,
                             subject=subject, 
                             description=description,
+                            type=type,
                             status=status,
                             date = date,
                             file=url,
@@ -1397,17 +1414,18 @@ def add_ticket_reply(ticket_real_id):
     if not (request.form.get('reply')):
         return jsonify({'success': False, 'comment': "Something Missed"})
 
-    admin_id = request.form.get('admin_id', '')
+    admin_uid = request.form.get('admin_uid', '')
     reply = request.form.get('reply', '')
-    status = 'inreview'
+    status = 'In Review'
     request_first = Ticket.query.filter_by(real_id=str(ticket_real_id)).first()
-    
+    print(request_first)
     date = str(datetime.now())
     
     
     # try:
         
-    if admin_id :
+    if admin_uid :
+        admin_id = Admin.query.filter_by(uid=admin_uid).first().id
         if not request_first.admin_id:
             request_first.admin_id= admin_id
             request_first.update()
@@ -1425,6 +1443,7 @@ def add_ticket_reply(ticket_real_id):
             fill_Ticket_table = Ticket(reply=reply,
                                     status=status,
                                     subject=request_first.subject,
+                                    type=request_first.type,
                                     description=request_first.description,
                                     employee_id = request_first.employee_id,
                                     admin_id = admin_id,
@@ -1445,6 +1464,7 @@ def add_ticket_reply(ticket_real_id):
         fill_Ticket_table = Ticket(reply=reply,
                                 status=request_first.status,
                                 subject=request_first.subject,
+                                type=request_first.type,
                                 description=request_first.description,
                                 employee_id = request_first.employee_id,
                                 action_by=employee_name,
