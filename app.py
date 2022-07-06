@@ -1560,8 +1560,8 @@ def add_task():
     date = str(datetime.now())
     # try:
     queue_ids ="[" + queue_ids + "]"
-    employee_idsgg ="[" + employee_ids + "]"
-    print(employee_idsgg)
+    employee_ids ="[" + employee_ids + "]"
+    print(employee_ids)
     test =[]
     test2 =[]
     hamada1= []
