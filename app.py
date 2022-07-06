@@ -1599,12 +1599,13 @@ def add_task():
         if len(i)==0:
             continue
         for j in final_arr2:
+            print(j)
             if int(i) == int(j):
                 test2.append(int(j))
                 continue
-        print(len(test2))
+        # print(len(test2))
         g = len(test2) % 2
-        print(g)
+        # print(g)
         if g==0:
             continue
         
