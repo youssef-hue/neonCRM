@@ -1603,6 +1603,7 @@ def add_task():
             if int(i) == int(j):
                 test2.append(int(j))
                 continue
+        print("__________________________")
         # print(len(test2))
         g = len(test2) % 2
         # print(g)
