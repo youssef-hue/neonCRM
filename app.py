@@ -1579,7 +1579,7 @@ def add_task():
         final_arr2 = list(set(arr2))
     except:
         final_arr2 = list(queue_ids)
-    print(final_arr2)
+    print(arr2)
     for i in final_arr1:
         if len(i)==0:
             continue
