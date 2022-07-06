@@ -1559,6 +1559,8 @@ def add_task():
         real_order_id = random.randint(100000, 9999999999999999)
     date = str(datetime.now())
     # try:
+    final_arr1 =[]
+    final_arr2 =[]
     test =[]
     test2 =[]
     hamada1= []
@@ -1570,10 +1572,10 @@ def add_task():
             arr2 = queue_ids[1:-1]
             arr2 = ''.join(arr2).split(",")
 
-    ar1 = list(set(arr1))
-    ar2 = list(set(arr2))
-    for i in ar1:
-        for j in arr1:
+    final_arr1 = list(set(arr1))
+    final_arr2 = list(set(arr2))
+    for i in final_arr1:
+        for j in final_arr1:
             if int(i) == int(j):
                 test.append(int(j))
         
@@ -1584,9 +1586,9 @@ def add_task():
             continue
         hamada1.append(i)
         test=[]
-    for i in ar2:
+    for i in final_arr2:
         
-        for j in ar2:
+        for j in final_arr2:
             if int(i) == int(j):
                 test2.append(int(j))
         
