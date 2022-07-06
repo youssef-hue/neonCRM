@@ -1596,8 +1596,7 @@ def add_task():
         hamada1.append(i)
         test=[]
     for i in final_arr2:
-        if len(i)==0:
-            continue
+        print(i)
         for j in final_arr2:
             
             if int(i) == int(j):
