@@ -1559,16 +1559,16 @@ def add_task():
         real_order_id = random.randint(100000, 9999999999999999)
     date = str(datetime.now())
     # try:
-    print(list(queue_ids))
+    print(queue_ids)
     test =[]
     test2 =[]
     hamada1= []
     hamada2= []
     if len(employee_ids) > 1 :
-            arr1 = employee_ids[1:-1]
+            # arr1 = employee_ids[1:-1]
             arr1 = ''.join(arr1).split(",")
     if len(queue_ids) > 1:
-            arr2 = queue_ids[1:-1]
+            # arr2 = queue_ids[1:-1]
             arr2 = ''.join(arr2).split(",")
             
     try:
