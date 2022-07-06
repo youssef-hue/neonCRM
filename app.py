@@ -1575,11 +1575,11 @@ def add_task():
     try:
         final_arr1 = list(set(arr1))
     except:
-        final_arr1 = list(int(employee_ids))
+        final_arr1 = list(employee_ids)
     try:
         final_arr2 = list(set(arr2))
     except:
-        final_arr2 = list(int(queue_ids))
+        final_arr2 = list(queue_ids)
 
     for i in final_arr1:
         for j in final_arr1:
