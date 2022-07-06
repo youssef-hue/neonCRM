@@ -1601,6 +1601,7 @@ def add_task():
         for j in final_arr2:
             if int(i) == int(j):
                 test2.append(int(j))
+                continue
         print(len(test2))
         g = len(test2) % 2
         print(g)
