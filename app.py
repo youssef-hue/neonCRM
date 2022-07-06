@@ -1561,7 +1561,7 @@ def add_task():
     # try:
     queue_ids ="[" + queue_ids + "]"
     employee_ids ="[" + employee_ids + "]"
-    print(queue_ids)
+    print(employee_ids)
     test =[]
     test2 =[]
     hamada1= []
