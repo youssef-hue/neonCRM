@@ -1542,7 +1542,6 @@ def add_ticket_reply(ticket_real_id):
 
 @app.route('/add_task', methods=['POST'])
 def add_task():
-    print(request.form)
     if not (request.form.get('queue_ids') and request.form.get('employee_ids') and request.form.get('title')):
         return jsonify({'success': False, 'comment': "Something Missed"})
     admin_id = Admin.query.filter_by(uid=request.form.get('admin_uid')).first().id
@@ -1554,12 +1553,13 @@ def add_task():
 
 
     real_order_id = random.randint(100000, 9999999999999999)
-    all_real_id = Ticket.query.filter_by(real_id=str(real_order_id)).all()
+    all_real_id = Task.query.filter_by(real_id=str(real_order_id)).all()
     while real_order_id in all_real_id:
         real_order_id = random.randint(100000, 9999999999999999)
     date = str(datetime.now())
     # try:
     test =[]
+    test2 =[]
     hamada1= []
     hamada2= []
     if len(employee_ids) > 1 :
@@ -1579,42 +1579,46 @@ def add_task():
         g = len(test) % 2
         
         if g==0:
+            
             continue
         hamada1.append(i)
         test=[]
     for i in ar2:
-        for j in arr1:
+        
+        for j in ar2:
             if int(i) == int(j):
-                test.append(int(j))
+                test2.append(int(j))
         
-        g = len(test) % 2
-        
+        g = len(test2) % 2
         if g==0:
             continue
+        
         hamada2.append(i)
-        test=[]
+        test2=[]
 
-
+    
     for i in hamada2:
+        
 
-
-        fill_task_table = Task(queue_id=i,
+        fill_task_table = Task(queue_id=int(i),
                                 title=title, 
                                 todo=todo,
                                 status=status,
+                                
                                 date = date,
                                 real_id=str(real_order_id),
                                 admin_id=admin_id)
+        
         fill_task_table.insert()
     task_data = Task.query.filter_by(real_id=str(real_order_id)).all()
     for i in hamada1:
         
         for j in task_data:
-            fill_task_table = Receive(employee_id=i,
+            fill_Receive_table = Receive(employee_id=int(i),
                                     task_id=j.id, 
                                     task_real_id=str(real_order_id),
                                     date = date)
-            fill_task_table.insert()
+            fill_Receive_table.insert()
 
     return jsonify({'success': True})
     # except:
