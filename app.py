@@ -1568,7 +1568,7 @@ def add_task():
             arr1 = employee_ids[1:-1]
             arr1 = ''.join(arr1).split(",")
     if len(queue_ids) > 1:
-            # arr2 = queue_ids[1:-1]
+            arr2 = queue_ids[1:-1]
             arr2 = ''.join(arr2).split(",")
             
     try:
@@ -1579,7 +1579,8 @@ def add_task():
         final_arr2 = list(set(arr2))
     except:
         final_arr2 = list(queue_ids)
-    print(arr2)
+    print(final_arr1)
+    print(final_arr2)
     for i in final_arr1:
         if len(i)==0:
             continue
