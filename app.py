@@ -1546,7 +1546,7 @@ def add_task():
     if not (request.form.get('queue_ids') and request.form.get('employee_ids') and request.form.get('title')):
         return jsonify({'success': False, 'comment': "Something Missed"})
     admin_id = Admin.query.filter_by(uid=request.form.get('admin_uid')).first().id
-    employee_ids = request.form.get("'employee_ids'", "")
+    employee_ids = request.form.get('employee_ids', "")
     queue_ids =  request.form.get('queue_ids', "")
     todo = request.form.get('todo', '')
     title = request.form.get('title', '')
@@ -1560,8 +1560,8 @@ def add_task():
     date = str(datetime.now())
     # try:
     queue_ids ="[" + queue_ids + "]"
-    employee_ids ="[" + employee_ids + "]"
-    print(employee_ids)
+    employee_idsgg ="[" + employee_ids + "]"
+    print(employee_idsgg)
     test =[]
     test2 =[]
     hamada1= []
