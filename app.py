@@ -1598,6 +1598,7 @@ def add_task():
     for i in final_arr2:
         if len(i)==0:
             continue
+        print(i)
         for j in final_arr2:
             print(j)
             if int(i) == int(j):
