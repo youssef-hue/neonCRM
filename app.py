@@ -1542,6 +1542,7 @@ def add_ticket_reply(ticket_real_id):
 
 @app.route('/add_task', methods=['POST'])
 def add_task():
+    print(request.form)
     if not (request.form.get('queue_ids') and request.form.get('employee_ids') and request.form.get('title')):
         return jsonify({'success': False, 'comment': "Something Missed"})
     admin_id = Admin.query.filter_by(uid=request.form.get('admin_uid')).first().id
