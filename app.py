@@ -1571,7 +1571,7 @@ def add_task():
     if len(queue_ids) > 1:
             arr2 = queue_ids[1:-1]
             arr2 = ''.join(arr2).split(",")
-
+    print(arr1)
     final_arr1 = list(set(arr1))
     final_arr2 = list(set(arr2))
     for i in final_arr1:
