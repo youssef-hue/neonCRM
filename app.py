@@ -1600,9 +1600,7 @@ def add_task():
     for i in final_arr2:
         if len(i)==0:
             continue
-        print(i)
         for j in arr2:
-            print(j)
             if int(i) == int(j):
                 test2.append(int(j))
                 continue
@@ -1637,6 +1635,9 @@ def add_task():
                                     task_real_id=str(real_order_id),
                                     date = date)
             fill_Receive_table.insert()
+    print(hamada2)
+    print(hamada1)
+
 
     return jsonify({'success': True})
     # except:
