@@ -184,6 +184,8 @@ class Employee(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uid = db.Column(db.String)
     name = db.Column(db.String)
+    image = db.Column(db.String)
+    email = db.Column(db.String)
     department_id = db.Column(db.Integer, db.ForeignKey('department.id'), nullable=False)
     receive_id = db.relationship('Receive', backref='Employee', lazy=True)
 
@@ -267,8 +269,10 @@ class Admin(db.Model):
         db.session.commit()
 
     id = db.Column(db.Integer, primary_key=True)
-    uid = db.Column(db.String(120))
-    name = db.Column(db.String(120))
+    uid = db.Column(db.String)
+    name = db.Column(db.String)
+    image = db.Column(db.String)
+    email = db.Column(db.String)
     department_id = db.Column(db.Integer, db.ForeignKey('department.id'), nullable=False)
     react_id = db.relationship('React', backref='Admin', lazy=True)
 
@@ -305,7 +309,7 @@ class Ticket(db.Model):
         if admin_name:
             took_by=admin_name.name
         else:
-            took_by = 'waiting'
+            took_by = "<i>Not Assigned</i>"
         x = {
             
 
@@ -508,6 +512,44 @@ def show_departments():
 
         abort(500)
 
+@app.route('/show_employees', methods=['GET'])
+def show_employees():
+    try:
+
+        all_employees = Employee.query.order_by(asc(Employee.id)).all()
+        employees = []
+
+        for employee in all_employees:
+            if employee.name == "deleted":
+                continue
+            employees.append(employee.format())
+
+        return jsonify({"employees": employees})
+
+    except:
+
+        abort(500)
+
+@app.route('/show_queues', methods=['GET'])
+def show_queues():
+    # try:
+
+    all_queues = Queue.query.order_by(asc(Queue.id)).all()
+    queues = []
+
+    for queue in all_queues:
+        if queue.title == "deleted":
+            continue
+        queues.append({"name":queue.title ,"id":queue.id})
+
+    return jsonify({"queues": queues})
+
+    # except:
+
+    #     abort(500)
+
+
+
 @app.route('/employee_onshift', methods=['GET'])
 def employee_onshift():
     try:
@@ -618,10 +660,12 @@ def show_request(real_id):
 
     #     abort(500)
 
-@app.route('/show_tickets/<admin_bool>/<user_id>', methods=['GET'])
-def show_tickets(admin_bool,user_id):
+@app.route('/show_tickets/<user_id>', methods=['GET'])
+def show_tickets(user_id):
     try:
-        if admin_bool == 'true':
+        admin_bool=Admin.query.filter_by(uid=user_id).first()
+        
+        if admin_bool :
             tickets = Ticket.query.all()
             closed = []
             pending  = []
@@ -638,7 +682,8 @@ def show_tickets(admin_bool,user_id):
 
             return jsonify({"closed": closed,"pending": pending,"inreview": inreview})
         else:
-            tickets = Ticket.query.filter_by(employee_id=user_id).all()
+            emp_id=Employee.query.filter_by(uid=user_id).first().id
+            tickets = Ticket.query.filter_by(employee_id=emp_id).all()
             closed = []
             pending  = []
             inreview  = []
@@ -660,156 +705,174 @@ def show_tickets(admin_bool,user_id):
     
 @app.route('/show_ticket/<real_id>', methods=['GET'])
 def show_ticket(real_id):
-    try:
-        the_ticket = Ticket.query.filter_by(real_id=str(real_id)).order_by(asc(Ticket.date)).all()
-        file = ''
-        dateee= []
-        tickets = {}
-        for i in the_ticket:
-            dateee.append(i.date)
-        start_date=min(dateee)
-        end_date=max(dateee)
-        for tickett in the_ticket:
-            if tickett.reply == None and len(the_ticket)!=1:
-                continue
-            if not tickett.file and not file:
-                file = tickett.file
-            if not tickett.reply:
-                reply= 'waiting'
-                action_by ='waiting'
-                date = 'waiting'
+    # try:
+    the_ticket = Ticket.query.filter_by(real_id=str(real_id)).order_by(asc(Ticket.date)).all()
+    file = ''
+    dateee= []
+    tickets = {}
+    for i in the_ticket:
+        dateee.append(i.date)
+    start_date=min(dateee)
+    end_date=max(dateee)
+    for tickett in the_ticket:
+        if tickett.admin_id:
+            action_image = Admin.query.get(tickett.admin_id)
+            
+            if action_image:
+                image = action_image.image
             else:
-                reply=tickett.reply
-                action_by =tickett.action_by 
-                date = tickett.date
-            if tickett.real_id in tickets.keys():
-                tickets[tickett.real_id]["items_list"].append(
-                                                        {
-                                                        "action_by": action_by ,
-                                                        "reply":reply ,
-                                                        "date": date
-                                                        })
-                
-
-
+                image ='https://media.istockphoto.com/vectors/male-profile-flat-blue-simple-icon-with-long-shadow-vector-id522855255?k=20&m=522855255&s=612x612&w=0&h=fLLvwEbgOmSzk1_jQ0MgDATEVcVOh_kqEe0rqi7aM5A='
+        else:
+            action_image = Employee.query.get(tickett.employee_id   )
+            if action_image:
+                image = action_image.image
             else:
-                tickets[tickett.real_id] = {
-                    "description": tickett.description,
-                    "subject": tickett.subject,
-                    "real_id": tickett.real_id,
-                    "type": tickett.type,
-                    "start_date": start_date,
-                    "end_date": end_date,
-                    "file": file,
-                    "items_list": [
-                                {
-                                "action_by": action_by ,
-                                "reply":reply ,
-                                "date": date
-                                }
-                                ],
-                    "status": tickett.status,
-                }
+                image ='https://media.istockphoto.com/vectors/male-profile-flat-blue-simple-icon-with-long-shadow-vector-id522855255?k=20&m=522855255&s=612x612&w=0&h=fLLvwEbgOmSzk1_jQ0MgDATEVcVOh_kqEe0rqi7aM5A='
+        
+        if tickett.reply == None and len(the_ticket)!=1:
+            continue
+        if not tickett.file and not file:
+            file = tickett.file
+        if not tickett.reply:
+            reply= None
+            action_by =None
+            date = None
+        else:
+            reply=tickett.reply
+            action_by =tickett.action_by 
+            date = tickett.date
+        print(image)
+        if tickett.real_id in tickets.keys():
+            
+            tickets[tickett.real_id]["items_list"].append(
+                                                    {
+                                                    "image": image ,
+                                                    "action_by": action_by ,
+                                                    "reply":reply ,
+                                                    "date": date
+                                                    })
+            
 
-        return jsonify({"ticket": tickets})
 
-    except:
+        else:
+            tickets[tickett.real_id] = {
+                "description": tickett.description,
+                "subject": tickett.subject,
+                "real_id": tickett.real_id,
+                "type": tickett.type,
+                "start_date": start_date,
+                "end_date": end_date,
+                "file": file,
+                "items_list": [
+                            {
+                            "image": image ,
+                            "action_by": action_by ,
+                            "reply":reply ,
+                            "date": date
+                            }
+                            ],
+                "status": tickett.status,
+            }
 
-        abort(500)
+    return jsonify({"ticket": tickets})
+
+    # except:
+
+    #     abort(500)
 
 @app.route('/show_tasks/<admin_bool>/<user_id>', methods=['GET'])
 def show_tasks(admin_bool,user_id):
-    try:
-        real_ids = []
-        taskat = []
-        
-        task_real = Task.query.all()
-        for taskk in task_real:
-            if taskk.id == 1:
-                continue
-            real_ids.append(taskk.real_id)
-        real_ids = list(set(real_ids))
-        for tasks in real_ids:
-            recieve = Receive.query.filter_by(task_real_id=tasks).all()
-            for i in recieve:
-                
-                
-                if int(i.employee_id) == int(user_id):
-                    passing = True
-                    break
-                else:
-                    passing = False
-            print(admin_bool)   
-            if admin_bool=="true" or passing == True: 
-                data = Task.query.filter_by(real_id = tasks).first()
-                taskat.append({'title':data.title ,'todo ':data.todo,'status ':data.status,'real_id ':data.real_id})
-        return jsonify({'success': True,"taskat": taskat})
-    except:
-
-        abort(500)
-
-@app.route('/show_task/<real_id>/<admin_bool>/<user_id>', methods=['GET'])
-def show_task(real_id,admin_bool,user_id):
-    try:
-        the_taskt = Task.query.filter_by(real_id=str(real_id)).order_by(asc(Task.date)).all()
-        taskat = {}
-        queue_name=''
-        reply=[]
-        recieve = Receive.query.filter_by(task_real_id=real_id).all()
+    # try:
+    real_ids = []
+    taskat = []
+    
+    task_real = Task.query.all()
+    for taskk in task_real:
+        if taskk.id == 1:
+            continue
+        real_ids.append(taskk.real_id)
+    real_ids = list(set(real_ids))
+    for tasks in real_ids:
+        recieve = Receive.query.filter_by(task_real_id=tasks).all()
         for i in recieve:
-
+            
+            
             if int(i.employee_id) == int(user_id):
                 passing = True
                 break
             else:
                 passing = False
+        print(admin_bool)   
         if admin_bool=="true" or passing == True: 
-            for tasks in the_taskt:
-                admin_name = Admin.query.get(tasks.admin_id).name
-                queue_name = Queue.query.get(tasks.queue_id).title
-                task_realpy  = Task_relpy.query.filter_by(task_id=tasks.id).all()
-                if task_realpy:
-                    for i in task_realpy:
-                        reply.append(i.reply)
-                else:
-                    reply=None
-                if tasks.real_id in taskat.keys():
-                    
-                    taskat[tasks.real_id]["items_list"].append(
-                                                            {
-                                                            "queue_name": queue_name,
-                                                            "files":tasks.files,
-                                                            "task_reply":reply,
-                                                            "status": tasks.status,
-                                                            "date": tasks.date 
-                                                            })
+            data = Task.query.filter_by(real_id = tasks).first()
+            taskat.append({'title':data.title ,'todo ':data.todo,'status ':data.status,'real_id ':data.real_id})
+    return jsonify({'success': True,"taskat": taskat})
+    # except:
 
-                else:
-                    
+    #     abort(500)
 
-                    taskat[tasks.real_id] = {
-                        "title": tasks.title,
-                        "todo": tasks.todo,
-                        "admin_name":admin_name,
-                        "items_list": [
-                                    {
-                                    "queue_name": queue_name,
-                                    "files":tasks.files,
-                                    "task_reply":reply,
-                                    "status": tasks.status,
-                                    "date": tasks.date 
-                                    }
-                                    ],
-                        
-                    }
-            return jsonify({'success': True,"taskat": taskat})
+@app.route('/show_task/<real_id>/<admin_bool>/<user_id>', methods=['GET'])
+def show_task(real_id,admin_bool,user_id):
+    # try:
+    the_taskt = Task.query.filter_by(real_id=str(real_id)).order_by(asc(Task.date)).all()
+    taskat = {}
+    queue_name=''
+    reply=[]
+    recieve = Receive.query.filter_by(task_real_id=real_id).all()
+    for i in recieve:
+
+        if int(i.employee_id) == int(user_id):
+            passing = True
+            break
         else:
-            return jsonify({'success': False,"taskat": "you have no permission"})
+            passing = False
+    if admin_bool=="true" or passing == True: 
+        for tasks in the_taskt:
+            admin_name = Admin.query.get(tasks.admin_id).name
+            queue_name = Queue.query.get(tasks.queue_id).title
+            task_realpy  = Task_relpy.query.filter_by(task_id=tasks.id).all()
+            if task_realpy:
+                for i in task_realpy:
+                    reply.append(i.reply)
+            else:
+                reply=None
+            if tasks.real_id in taskat.keys():
+                
+                taskat[tasks.real_id]["items_list"].append(
+                                                        {
+                                                        "queue_name": queue_name,
+                                                        "files":tasks.files,
+                                                        "task_reply":reply,
+                                                        "status": tasks.status,
+                                                        "date": tasks.date 
+                                                        })
+
+            else:
+                
+
+                taskat[tasks.real_id] = {
+                    "title": tasks.title,
+                    "todo": tasks.todo,
+                    "admin_name":admin_name,
+                    "items_list": [
+                                {
+                                "queue_name": queue_name,
+                                "files":tasks.files,
+                                "task_reply":reply,
+                                "status": tasks.status,
+                                "date": tasks.date 
+                                }
+                                ],
+                    
+                }
+        return jsonify({'success': True,"taskat": taskat})
+    else:
+        return jsonify({'success': False,"taskat": "you have no permission"})
        
 
-    except:
+    # except:
 
-        abort(500)
+    #     abort(500)
 # ______________________________________________________________
 
 # DELETE FUNCTIONS
@@ -1245,45 +1308,38 @@ def add_queue():
 
 @app.route('/add_employee', methods=['POST'])
 def add_employee():
+    print(request.form)
     if not (request.form.get('uid') and request.form.get('name') and request.form.get('department_id')):
         return jsonify({'success': False, 'comment': "Something Missed"})
-
+    isAdmin = request.form.get('isAdmin', '')
     uid = request.form.get('uid', '')
     department_id = request.form.get('department_id', '')
     name = request.form.get('name', '')
+    email = request.form.get('email', '')
+    image ='https://media.istockphoto.com/vectors/male-profile-flat-blue-simple-icon-with-long-shadow-vector-id522855255?k=20&m=522855255&s=612x612&w=0&h=fLLvwEbgOmSzk1_jQ0MgDATEVcVOh_kqEe0rqi7aM5A='
     try:
-
-        fill_employee_table = Employee(uid=uid, name=name, department_id=department_id)
-        fill_employee_table.insert()
-
-        return jsonify({'success': True})
+        if isAdmin == "0":
+            fill_employee_table = Employee(uid=uid, email=email,name=name,image=image, department_id=department_id)
+            fill_employee_table.insert()
+            data = Employee.query.filter_by(uid =uid).first()
+            return jsonify({'success': True,'id': data.id,'permission': 0})
+        elif isAdmin == "1":
+            fill_admin_table = Admin(uid=uid, name=name,image=image,email=email, department_id=department_id)
+            fill_admin_table.insert()
+            data = Admin.query.filter_by(uid =uid).first()
+            return jsonify({'success': True,'id': data.id,'permission': 0})
+        else:
+            return jsonify({'success': False})
+        
     except:
 
         abort(422)
-
-@app.route('/add_admin', methods=['POST'])
-def add_admin():
-    if not (request.form.get('uid') and request.form.get('name') and request.form.get('department_id')):
-        return jsonify({'success': False, 'comment': "Something Missed"})
-
-    uid = request.form.get('uid', '')
-    department_id = request.form.get('department_id', '')
-    name = request.form.get('name', '')
-    # try:
-    print("hi")
-    fill_admin_table = Admin(uid=uid, name=name, department_id=department_id)
-    fill_admin_table.insert()
-
-    return jsonify({'success': True})
-    # except:
-
-    #     abort(422)
 
 @app.route('/add_request', methods=['POST'])
 def add_request():
     if not (request.form.get('subject') and request.form.get('description') and request.form.get('employee_id')):
         return jsonify({'success': False, 'comment': "Something Missed"})
-
+    
     employee_id = request.form.get('employee_id', '')
     subject = request.form.get('subject', '')
     description = request.form.get('description', '')
@@ -1371,10 +1427,11 @@ def add_request_reply(request_real_id):
 
 @app.route('/add_ticket', methods=['POST'])
 def add_ticket():
+    print(request.form)
     if not (request.form.get('subject') and request.form.get('description') and request.form.get('employee_id')):
         return jsonify({'success': False, 'comment': "Something Missed"})
-
-    employee_id = request.form.get('employee_id', '')
+    file ='2'
+    employee_id = Employee.query.filter_by(uid=request.form.get('employee_id')).first().id
     subject = request.form.get('subject', '')
     type = request.form.get('type', '')
     description = request.form.get('description', '')
@@ -1382,6 +1439,8 @@ def add_ticket():
         file = request.files['file']
     except:
         pass
+    
+
     status = 'pending'
     employee_name = Employee.query.get(employee_id).name
     real_order_id = random.randint(100000, 9999999999999999)
@@ -1390,9 +1449,11 @@ def add_ticket():
         real_order_id = random.randint(100000, 9999999999999999)
     date = str(datetime.now())
     # try:
-    if file:
+    if file!='2':
         storage.child("ticket_file/" + str(real_order_id)).put(file, file.mimetype)
         url = storage.child("ticket_file/" + str(real_order_id)).get_url(None)
+    else:
+        url=""
     fill_Ticket_table = Ticket(employee_id=employee_id,
                             subject=subject, 
                             description=description,
@@ -1481,9 +1542,10 @@ def add_ticket_reply(ticket_real_id):
 
 @app.route('/add_task', methods=['POST'])
 def add_task():
+    print(request.form)
     if not (request.form.get('queue_ids') and request.form.get('employee_ids') and request.form.get('title')):
         return jsonify({'success': False, 'comment': "Something Missed"})
-    admin_id = request.form.get('admin_id', '')
+    admin_id = Admin.query.filter_by(uid=request.form.get('admin_uid')).first().id
     employee_ids = request.form.get('employee_ids', '')
     queue_ids = request.form.get('queue_ids', '')
     todo = request.form.get('todo', '')
@@ -1497,17 +1559,43 @@ def add_task():
         real_order_id = random.randint(100000, 9999999999999999)
     date = str(datetime.now())
     # try:
-
-
-    if len(employee_ids) > 1 and employee_ids[0] == '[':
+    test =[]
+    hamada1= []
+    hamada2= []
+    if len(employee_ids) > 1 :
             arr1 = employee_ids[1:-1]
             arr1 = ''.join(arr1).split(",")
-    if len(queue_ids) > 1 and queue_ids[0] == '[':
+    if len(queue_ids) > 1:
             arr2 = queue_ids[1:-1]
             arr2 = ''.join(arr2).split(",")
-    print(arr1)
-    print(arr2)
-    for i in arr2:
+
+    ar1 = list(set(arr1))
+    ar2 = list(set(arr2))
+    for i in ar1:
+        for j in arr1:
+            if int(i) == int(j):
+                test.append(int(j))
+        
+        g = len(test) % 2
+        
+        if g==0:
+            continue
+        hamada1.append(i)
+        test=[]
+    for i in ar2:
+        for j in arr1:
+            if int(i) == int(j):
+                test.append(int(j))
+        
+        g = len(test) % 2
+        
+        if g==0:
+            continue
+        hamada2.append(i)
+        test=[]
+
+
+    for i in hamada2:
 
 
         fill_task_table = Task(queue_id=i,
@@ -1519,7 +1607,7 @@ def add_task():
                                 admin_id=admin_id)
         fill_task_table.insert()
     task_data = Task.query.filter_by(real_id=str(real_order_id)).all()
-    for i in arr1:
+    for i in hamada1:
         
         for j in task_data:
             fill_task_table = Receive(employee_id=i,
