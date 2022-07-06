@@ -1559,8 +1559,7 @@ def add_task():
         real_order_id = random.randint(100000, 9999999999999999)
     date = str(datetime.now())
     # try:
-    final_arr1 =[]
-    final_arr2 =[]
+
     test =[]
     test2 =[]
     hamada1= []
