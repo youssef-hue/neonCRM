@@ -1547,7 +1547,7 @@ def add_task():
         return jsonify({'success': False, 'comment': "Something Missed"})
     admin_id = Admin.query.filter_by(uid=request.form.get('admin_uid')).first().id
     employee_ids = request.form.get('employee_ids', '')
-    queue_ids = request.form.get('queue_ids', '')
+    queue_ids = request.form.get("'queue_ids'", '')
     todo = request.form.get('todo', '')
     title = request.form.get('title', '')
     status = 'pending'
