@@ -1571,9 +1571,16 @@ def add_task():
     if len(queue_ids) > 1:
             arr2 = queue_ids[1:-1]
             arr2 = ''.join(arr2).split(",")
-    print(arr1)
-    final_arr1 = list(set(arr1))
-    final_arr2 = list(set(arr2))
+            
+    try:
+        final_arr1 = list(set(arr1))
+    except:
+        final_arr1 = list(int(employee_ids))
+    try:
+        final_arr2 = list(set(arr2))
+    except:
+        final_arr2 = list(int(queue_ids))
+
     for i in final_arr1:
         for j in final_arr1:
             if int(i) == int(j):
