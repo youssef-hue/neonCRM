@@ -1582,6 +1582,8 @@ def add_task():
         final_arr2 = list(queue_ids)
     print(final_arr2)
     for i in final_arr1:
+        if len(i)==0:
+            continue
         for j in final_arr1:
             if int(i) == int(j):
                 test.append(int(j))
@@ -1594,7 +1596,8 @@ def add_task():
         hamada1.append(i)
         test=[]
     for i in final_arr2:
-        
+        if len(i)==0:
+            continue
         for j in final_arr2:
             if int(i) == int(j):
                 test2.append(int(j))
