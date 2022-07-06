@@ -1584,7 +1584,7 @@ def add_task():
     for i in final_arr1:
         if len(i)==0:
             continue
-        for j in final_arr1:
+        for j in arr1:
             if int(i) == int(j):
                 test.append(int(j))
         
@@ -1599,7 +1599,7 @@ def add_task():
         if len(i)==0:
             continue
         print(i)
-        for j in final_arr2:
+        for j in arr2:
             print(j)
             if int(i) == int(j):
                 test2.append(int(j))
