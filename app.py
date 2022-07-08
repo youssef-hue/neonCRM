@@ -84,6 +84,35 @@ class Department(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
 
+class Todo(db.Model):
+    __tablename__ = 'todo'
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
+
+    def update(self):
+        db.session.commit()
+
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
+
+    id = db.Column(db.Integer, primary_key=True)
+    subject = db.Column(db.String)
+    action_by  = db.Column(db.String)
+    status = db.Column(db.String)
+    reply  = db.Column(db.String)
+    file  = db.Column(db.String)
+    real_id = db.Column(db.String)
+    date =  db.Column(db.String)
+    task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False)
+    employee_id = db.Column(db.Integer, db.ForeignKey('employee.id'), nullable=True)
+    admin_id = db.Column(db.Integer, db.ForeignKey('admin.id'), nullable=True)
+
+
+
 class Offs(db.Model):
     __tablename__ = 'offs'
 
@@ -376,7 +405,31 @@ class Task(db.Model):
     def insert(self):
         db.session.add(self)
         db.session.commit()
+    def format(self):
+        stor = []
+        names = []
+        data = Task.query.get(self.id)
+        admin_name = Admin.query.get(data.admin_id).name
+        revieve_data = Receive.query.filter_by(task_real_id=data.real_id).all()
+        for i in revieve_data:
+            stor.append(i.employee_id)
+        y =list(set(stor))
+        for i in y:
+            names.append(Employee.query.get(i).name)
+        x = {
+            
 
+            "title": self.title ,
+            "todo":self.todo ,
+            "made_by":admin_name,
+            "description":self.description ,
+            "real_id":self.real_id ,
+            "status":self.status ,
+            "recieve_by":names ,
+            "date":self.date 
+            
+        }
+        return x
     id = db.Column(db.Integer, primary_key=True)
     queue_id = db.Column(db.Integer, db.ForeignKey('queue.id'), nullable=False)
     title = db.Column(db.String)
@@ -780,95 +833,106 @@ def show_ticket(real_id):
 
     #     abort(500)
 
-@app.route('/show_tasks/<admin_bool>/<user_id>', methods=['GET'])
-def show_tasks(admin_bool,user_id):
+@app.route('/show_canvas/<user_id>', methods=['GET'])
+def show_tasks(user_id):
     # try:
-    real_ids = []
-    taskat = []
-    
-    task_real = Task.query.all()
-    for taskk in task_real:
-        if taskk.id == 1:
-            continue
-        real_ids.append(taskk.real_id)
-    real_ids = list(set(real_ids))
-    for tasks in real_ids:
-        recieve = Receive.query.filter_by(task_real_id=tasks).all()
-        for i in recieve:
-            
-            
-            if int(i.employee_id) == int(user_id):
-                passing = True
-                break
-            else:
-                passing = False
-        print(admin_bool)   
-        if admin_bool=="true" or passing == True: 
-            data = Task.query.filter_by(real_id = tasks).first()
-            taskat.append({'title':data.title ,'todo ':data.todo,'status ':data.status,'real_id ':data.real_id})
-    return jsonify({'success': True,"taskat": taskat})
+        admin_bool=Admin.query.filter_by(uid=user_id).first()
+        if admin_bool :
+            tasks = Task.query.order_by(asc(Task.date)).all()
+            takayat = []
+            stor=[]
+            for i in tasks:
+                stor.append(i.real_id)
+            final_stor=list(set(stor))
+            for taskat in final_stor:
+                data = Task.query.filter_by(real_id=taskat).order_by(asc(Task.date)).first()
+                if data.id ==1:
+                    continue
+                takayat.append(data.format())
+
+            return jsonify({"canva":takayat})
+        else:
+            emp_id=Employee.query.filter_by(uid=user_id).first().id
+            recieve_data = Receive.query.filter_by(employee_id=emp_id).all()
+            takayat = []
+            stor=[]
+            for i in recieve_data:
+                
+                stor.append(i.task_real_id)
+            final_stor=list(set(stor))
+            for taskat in final_stor:
+                
+                data = Task.query.filter_by(real_id=taskat).order_by(asc(Task.date)).first()
+                if data.id ==1:
+                    continue
+                takayat.append(data.format())
+
+            return jsonify({"canva": takayat})
     # except:
 
     #     abort(500)
 
-@app.route('/show_task/<real_id>/<admin_bool>/<user_id>', methods=['GET'])
-def show_task(real_id,admin_bool,user_id):
+@app.route('/show_canva/<real_id>', methods=['GET'])
+def show_canva(real_id):
     # try:
     the_taskt = Task.query.filter_by(real_id=str(real_id)).order_by(asc(Task.date)).all()
     taskat = {}
     queue_name=''
     reply=[]
-    recieve = Receive.query.filter_by(task_real_id=real_id).all()
-    for i in recieve:
+    stor = []
 
-        if int(i.employee_id) == int(user_id):
-            passing = True
-            break
+
+    names = []
+
+    revieve_data = Receive.query.filter_by(task_real_id=real_id).all()
+    for i in revieve_data:
+        stor.append(i.employee_id)
+    y =list(set(stor))
+    for i in y:
+        names.append(Employee.query.get(i).name)
+
+
+    for tasks in the_taskt:
+        admin_name = Admin.query.get(tasks.admin_id).name
+        queue_name = Queue.query.get(tasks.queue_id).title
+        task_realpy  = Task_relpy.query.filter_by(task_id=tasks.id).all()
+        if task_realpy:
+            for i in task_realpy:
+                reply.append(i.reply)
         else:
-            passing = False
-    if admin_bool=="true" or passing == True: 
-        for tasks in the_taskt:
-            admin_name = Admin.query.get(tasks.admin_id).name
-            queue_name = Queue.query.get(tasks.queue_id).title
-            task_realpy  = Task_relpy.query.filter_by(task_id=tasks.id).all()
-            if task_realpy:
-                for i in task_realpy:
-                    reply.append(i.reply)
-            else:
-                reply=None
-            if tasks.real_id in taskat.keys():
-                
-                taskat[tasks.real_id]["items_list"].append(
-                                                        {
-                                                        "queue_name": queue_name,
-                                                        "files":tasks.files,
-                                                        "task_reply":reply,
-                                                        "status": tasks.status,
-                                                        "date": tasks.date 
-                                                        })
+            reply=None
+        if tasks.real_id in taskat.keys():
+            
+            taskat[tasks.real_id]["queues"].append(
+                                                    {
+                                                    "queue_name": queue_name,
+                                                    "files":tasks.files,
+                                                    "task_reply":reply,
+                                                    "status": tasks.status,
+                                                    "date": tasks.date 
+                                                    })
 
-            else:
-                
+        else:
+            
 
-                taskat[tasks.real_id] = {
-                    "title": tasks.title,
-                    "todo": tasks.todo,
-                    "admin_name":admin_name,
-                    "items_list": [
-                                {
-                                "queue_name": queue_name,
-                                "files":tasks.files,
-                                "task_reply":reply,
-                                "status": tasks.status,
-                                "date": tasks.date 
-                                }
-                                ],
-                    
-                }
-        return jsonify({'success': True,"taskat": taskat})
-    else:
-        return jsonify({'success': False,"taskat": "you have no permission"})
-       
+            taskat[tasks.real_id] = {
+                "title": tasks.title,
+                "todo": tasks.todo,
+                "admin_name":admin_name,
+                "recieve":names,
+                "queues": [
+                            {
+                            "queue_name": queue_name,
+                            "files":tasks.files,
+                            "task_reply":reply,
+                            "status": tasks.status,
+                            "date": tasks.date 
+                            }
+                            ],
+                
+            }
+    return jsonify({'success': True,"canva": taskat})
+    
 
     # except:
 
@@ -1538,7 +1602,108 @@ def add_ticket_reply(ticket_real_id):
 
     #     abort(422)
 
-  
+    action_by  = db.Column(db.String)
+    reply  = db.Column(db.String)
+
+# @app.route('/add_todo', methods=['POST'])
+# def add_todo():
+#     print(request.form)
+#     if not (request.form.get('subject')  and request.form.get('task_id')):
+#         return jsonify({'success': False, 'comment': "Something Missed"})
+#     file ='2'
+#     subject = request.form.get('subject', '')
+#     admin_id = request.form.get('admin_uid', '')
+#     task_id = request.form.get('task_id', '')
+#     try:
+#         file = request.files['file']
+#     except:
+#         pass
+    
+
+#     status = 'pending'
+#     admin_name = Admin.query.filter_by(uid=admin_id).first()
+#     real_order_id = random.randint(100000, 9999999999999999)
+#     all_real_id = Todo.query.filter_by(real_id=str(real_order_id)).all()
+#     while real_order_id in all_real_id:
+#         real_order_id = random.randint(100000, 9999999999999999)
+#     date = str(datetime.now())
+#     # try:
+#     if file!='2':
+#         storage.child("todo_file/" + str(real_order_id)).put(file, file.mimetype)
+#         url = storage.child("todo_file/" + str(real_order_id)).get_url(None)
+#     else:
+#         url=""
+#     fill_Todo_table = Todo(task_id=task_id,
+#                             admin_id=admin_name.id,
+#                             subject = subject,
+#                             action_by  =admin_name.name,
+#                             status =status,
+#                             file  = url,
+#                             real_id = str(real_order_id),
+#                             date = date)
+#     fill_Todo_table.insert()
+
+#     return jsonify({'success': True, "comment" : ""})
+
+# @app.route('/add_todo_reply/<todo_real_id>', methods=['POST'])
+# def add_todo_reply(todo_real_id):
+#     if not (request.form.get('reply')):
+#         return jsonify({'success': False, 'comment': "Something Missed"})
+#     file ='2'
+#     admin_uid = request.form.get('admin_uid', '')
+#     employee_uid = request.form.get('employee_uid', '')
+#     reply = request.form.get('reply', '')
+#     status = 'In Review'
+#     request_first = Todo.query.filter_by(real_id=str(todo_real_id)).first()
+#     todo_data = Todo.query.filter_by(real_id=str(todo_real_id)).all()
+#     todo_len = len(todo_data)
+#     print(request_first)
+#     date = str(datetime.now())
+#     try:
+#         file = request.files['file']
+#     except:
+#         pass
+    
+#     # try:
+       
+#     if admin_uid :
+#         if file!='2':
+#             storage.child("todo_file/" + str(real_order_id)).put(file, file.mimetype)
+#             url = storage.child("todo_file/" + str(real_order_id)).get_url(None)
+#         else:
+#             url="" 
+#         admin_id = Admin.query.filter_by(uid=admin_uid).first()
+#         action_by = admin_id.name
+#         fill_Todo_table = Todo(task_id=request_first.task_id,
+#                             admin_id=request_first.admin_name.id,
+#                             subject = request_first.subject,
+#                             action_by  =action_by,
+#                             file  = url,
+#                             real_id = todo_real_id,
+#                             date = request_first.date)
+#         fill_Todo_table.insert()
+#         requests = Ticket.query.filter_by(real_id=str(ticket_real_id)).all()
+#         for i in requests:
+#             i.status= status
+#             i.update()
+#         return jsonify({'success': True, "comment" : ""})
+#     else:
+#         employee_name = Employee.query.get(request_first.employee_id).name
+#         fill_Ticket_table = Ticket(reply=reply,
+#                                 status=request_first.status,
+#                                 subject=request_first.subject,
+#                                 type=request_first.type,
+#                                 description=request_first.description,
+#                                 employee_id = request_first.employee_id,
+#                                 action_by=employee_name,
+#                                 date = date,
+#                                 real_id=ticket_real_id)
+#         fill_Ticket_table.insert()
+
+#         return jsonify({'success': True, "comment" : "" })
+#     # except:
+
+#     #     abort(422)
 
 @app.route('/add_task', methods=['POST'])
 def add_task():
@@ -1635,9 +1800,6 @@ def add_task():
                                     task_real_id=str(real_order_id),
                                     date = date)
             fill_Receive_table.insert()
-    print(hamada2)
-    print(hamada1)
-
 
     return jsonify({'success': True})
     # except:
