@@ -105,7 +105,9 @@ class Todo(db.Model):
     status = db.Column(db.String)
     reply  = db.Column(db.String)
     file  = db.Column(db.String)
+    file_name  = db.Column(db.String)
     real_id = db.Column(db.String)
+    date =  db.Column(db.String)
     date =  db.Column(db.String)
     task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False)
     employee_id = db.Column(db.Integer, db.ForeignKey('employee.id'), nullable=True)
@@ -755,7 +757,84 @@ def show_tickets(user_id):
     except:
 
         abort(500)
-    
+
+@app.route('/show_task/<real_id>', methods=['GET'])
+def show_task(real_id):
+    # try:
+    the_todo = Todo.query.filter_by(real_id=real_id).order_by(asc(Todo.date)).all()
+    # file = ''
+
+    dateee= []
+    tasks = {}
+    for i in the_todo:
+        dateee.append(i.date)
+    start_date=min(dateee)
+    end_date=max(dateee)
+    for todoo in the_todo:
+        if todoo.admin_id:
+            action_image = Admin.query.get(todoo.admin_id)
+            
+            if action_image:
+                image = action_image.image
+            else:
+                image ='https://media.istockphoto.com/vectors/male-profile-flat-blue-simple-icon-with-long-shadow-vector-id522855255?k=20&m=522855255&s=612x612&w=0&h=fLLvwEbgOmSzk1_jQ0MgDATEVcVOh_kqEe0rqi7aM5A='
+        else:
+            action_image = Employee.query.get(todoo.employee_id   )
+            if action_image:
+                image = action_image.image
+            else:
+                image ='https://media.istockphoto.com/vectors/male-profile-flat-blue-simple-icon-with-long-shadow-vector-id522855255?k=20&m=522855255&s=612x612&w=0&h=fLLvwEbgOmSzk1_jQ0MgDATEVcVOh_kqEe0rqi7aM5A='
+        
+        if todoo.reply == None and len(the_todo)!=1:
+            continue
+        # if not todoo.file and not file:
+        #     file = todoo.file
+        if not todoo.reply:
+            reply= None
+            action_by =None
+            date = None
+        else:
+            reply=todoo.reply
+            action_by =todoo.action_by 
+            date = todoo.date
+        if todoo.real_id in tasks.keys() and  todoo.reply !=None:
+            
+            tasks[todoo.real_id]["tasks_list"].append(
+                                                    {
+                                                    "image": image ,
+                                                    "action_by": action_by ,
+                                                    "reply":reply ,
+                                                    "file": todoo.file,
+                                                    "date": date
+                                                    })
+            
+
+
+        else:
+            tasks[todoo.real_id] = {
+                "subject": todoo.subject,
+                "real_id": todoo.real_id,
+                "start_date": start_date,
+                "end_date": end_date,
+                
+                "tasks_list": [
+                            {
+                            "image": image ,
+                            "action_by": action_by ,
+                            "file": todoo.file,
+                            "reply":reply ,
+                            "date": date
+                            }
+                            ],
+                "status": todoo.status,
+            }
+
+    return jsonify({"task": tasks})
+
+    # except:
+
+    #     abort(500)
+
 @app.route('/show_ticket/<real_id>', methods=['GET'])
 def show_ticket(real_id):
     # try:
@@ -880,8 +959,7 @@ def show_canva(real_id):
     queue_name=''
     reply=[]
     stor = []
-
-
+    hamada_real = []
     names = []
 
     revieve_data = Receive.query.filter_by(task_real_id=real_id).all()
@@ -890,9 +968,10 @@ def show_canva(real_id):
     y =list(set(stor))
     for i in y:
         names.append(Employee.query.get(i).name)
-
+    
 
     for tasks in the_taskt:
+        hamada = []
         admin_name = Admin.query.get(tasks.admin_id).name
         queue_name = Queue.query.get(tasks.queue_id).title
         task_realpy  = Task_relpy.query.filter_by(task_id=tasks.id).all()
@@ -901,14 +980,24 @@ def show_canva(real_id):
                 reply.append(i.reply)
         else:
             reply=None
+        todo =Todo.query.filter_by(task_id=tasks.id).all()
+        for l in todo:
+            hamada_real.append(l.real_id)
+        real_tasks_id = list(set(hamada_real))
+        for k in real_tasks_id:
+                
+            todo_data =Todo.query.filter_by(real_id=k,task_id = tasks.id,reply =None).first()
+            if todo_data:
+                hamada.append({'subject' :todo_data.subject,'status' :todo_data.status,'real_id' :k})
+
         if tasks.real_id in taskat.keys():
             
             taskat[tasks.real_id]["queues"].append(
                                                     {
                                                     "queue_name": queue_name,
                                                     "files":tasks.files,
-                                                    "task_reply":reply,
-                                                    "status": tasks.status,
+                                                    "queue_id":tasks.id,
+                                                    'task':hamada,
                                                     "date": tasks.date 
                                                     })
 
@@ -918,19 +1007,21 @@ def show_canva(real_id):
             taskat[tasks.real_id] = {
                 "title": tasks.title,
                 "todo": tasks.todo,
+                "files":tasks.files,
                 "admin_name":admin_name,
                 "recieve":names,
                 "queues": [
                             {
                             "queue_name": queue_name,
                             "files":tasks.files,
-                            "task_reply":reply,
-                            "status": tasks.status,
+                            'task':hamada,
+                            "queue_id":tasks.id,
                             "date": tasks.date 
                             }
                             ],
                 
             }
+        hamada = []
     return jsonify({'success': True,"canva": taskat})
     
 
@@ -1080,6 +1171,30 @@ def update_employee(id):
     except:
 
         abort(422)
+
+@app.route('/migrate_task/<real_id>', methods=['PATCH'])
+def migrate_task(real_id):
+    update = Todo.query.filter_by(real_id=real_id).all()
+    for i in update:
+        c = i.task_id
+        break
+    task_data = Task.query.filter_by(id=c).order_by(asc(Task.date)).first().real_id
+    try:
+        nexttask_data = Task.query.filter_by(id=(c+1)).order_by(asc(Task.date)).first().real_id
+    except:
+        nexttask_data ='7amada'
+    # try:
+    if task_data==nexttask_data:
+        for i in update:
+            i.task_id=i.task_id+1
+            i.update()
+
+        return jsonify({'success': True})
+    else:
+        return jsonify({'success': False})
+    # except:
+
+    #     abort(422)
 
 @app.route('/update_admin/<id>', methods=['PATCH'])
 def update_admin(id):
@@ -1605,105 +1720,133 @@ def add_ticket_reply(ticket_real_id):
     action_by  = db.Column(db.String)
     reply  = db.Column(db.String)
 
-# @app.route('/add_todo', methods=['POST'])
-# def add_todo():
-#     print(request.form)
-#     if not (request.form.get('subject')  and request.form.get('task_id')):
-#         return jsonify({'success': False, 'comment': "Something Missed"})
-#     file ='2'
-#     subject = request.form.get('subject', '')
-#     admin_id = request.form.get('admin_uid', '')
-#     task_id = request.form.get('task_id', '')
-#     try:
-#         file = request.files['file']
-#     except:
-#         pass
+@app.route('/add_todo', methods=['POST'])
+def add_todo():
+    print(request.form)
+    if not (request.form.get('subject')  and request.form.get('task_id')):
+        return jsonify({'success': False, 'comment': "Something Missed"})
+    file ='2'
+    subject = request.form.get('subject', '')
+    admin_id = request.form.get('admin_uid', '')
+    task_id = request.form.get('task_id', '')
+    try:
+        file = request.files['file']
+    except:
+        pass
     
 
-#     status = 'pending'
-#     admin_name = Admin.query.filter_by(uid=admin_id).first()
-#     real_order_id = random.randint(100000, 9999999999999999)
-#     all_real_id = Todo.query.filter_by(real_id=str(real_order_id)).all()
-#     while real_order_id in all_real_id:
-#         real_order_id = random.randint(100000, 9999999999999999)
-#     date = str(datetime.now())
-#     # try:
-#     if file!='2':
-#         storage.child("todo_file/" + str(real_order_id)).put(file, file.mimetype)
-#         url = storage.child("todo_file/" + str(real_order_id)).get_url(None)
-#     else:
-#         url=""
-#     fill_Todo_table = Todo(task_id=task_id,
-#                             admin_id=admin_name.id,
-#                             subject = subject,
-#                             action_by  =admin_name.name,
-#                             status =status,
-#                             file  = url,
-#                             real_id = str(real_order_id),
-#                             date = date)
-#     fill_Todo_table.insert()
+    status = 'pending'
+    admin_name = Admin.query.filter_by(uid=admin_id).first()
+    real_order_id = random.randint(100000, 9999999999999999)
+    all_real_id = Todo.query.filter_by(real_id=str(real_order_id)).all()
+    while real_order_id in all_real_id:
+        real_order_id = random.randint(100000, 9999999999999999)
 
-#     return jsonify({'success': True, "comment" : ""})
+    real_file_name = random.randint(100000, 9999999999999999)
+    file_name = Todo.query.filter_by(file_name=str(real_file_name)).all()
+    while real_file_name in file_name:
+        real_file_name = random.randint(100000, 9999999999999999)
+    date = str(datetime.now())
+    print(real_file_name)
 
-# @app.route('/add_todo_reply/<todo_real_id>', methods=['POST'])
-# def add_todo_reply(todo_real_id):
-#     if not (request.form.get('reply')):
-#         return jsonify({'success': False, 'comment': "Something Missed"})
-#     file ='2'
-#     admin_uid = request.form.get('admin_uid', '')
-#     employee_uid = request.form.get('employee_uid', '')
-#     reply = request.form.get('reply', '')
-#     status = 'In Review'
-#     request_first = Todo.query.filter_by(real_id=str(todo_real_id)).first()
-#     todo_data = Todo.query.filter_by(real_id=str(todo_real_id)).all()
-#     todo_len = len(todo_data)
-#     print(request_first)
-#     date = str(datetime.now())
-#     try:
-#         file = request.files['file']
-#     except:
-#         pass
+    # try:
+    if file!='2':
+        storage.child("todo_file/" + str(real_file_name)).put(file, file.mimetype)
+        url = storage.child("todo_file/" + str(real_file_name)).get_url(None)
+    else:
+        url=""
+    fill_Todo_table = Todo(task_id=task_id,
+                            admin_id=admin_name.id,
+                            subject = subject,
+                            action_by  =admin_name.name,
+                            status =status,
+                            file_name =  str(real_file_name),
+                            file  = url,
+                            real_id = str(real_order_id),
+                            date = date)
+    fill_Todo_table.insert()
+
+    return jsonify({'success': True, "comment" : ""})
+
+@app.route('/add_todo_reply/<real_id>', methods=['POST'])
+def add_todo_reply(real_id):
+    if not (request.form.get('reply')):
+        return jsonify({'success': False, 'comment': "Something Missed"})
+    file ='2'
+    uid = request.form.get('uid', '')
+    try:
+        admin_uid = Admin.query.filter_by(uid=uid).first().uid
+    except:
+        pass
+    try:
+        employee_uid = Employee.query.filter_by(uid=uid).first().uid
+    except:
+        pass
+    reply = request.form.get('reply', '')
+    status = 'In Review'
+    request_first = Todo.query.filter_by(real_id=str(real_id)).first()
+
+    real_file_name = random.randint(100000, 9999999999999999)
+    file_name = Todo.query.filter_by(file_name=str(real_file_name)).all()
+    while real_file_name in file_name:
+        real_file_name = random.randint(100000, 9999999999999999)
+    date = str(datetime.now())
+    try:
+        file = request.files['file']
+    except:
+        pass
     
-#     # try:
+    # try:
        
-#     if admin_uid :
-#         if file!='2':
-#             storage.child("todo_file/" + str(real_order_id)).put(file, file.mimetype)
-#             url = storage.child("todo_file/" + str(real_order_id)).get_url(None)
-#         else:
-#             url="" 
-#         admin_id = Admin.query.filter_by(uid=admin_uid).first()
-#         action_by = admin_id.name
-#         fill_Todo_table = Todo(task_id=request_first.task_id,
-#                             admin_id=request_first.admin_name.id,
-#                             subject = request_first.subject,
-#                             action_by  =action_by,
-#                             file  = url,
-#                             real_id = todo_real_id,
-#                             date = request_first.date)
-#         fill_Todo_table.insert()
-#         requests = Ticket.query.filter_by(real_id=str(ticket_real_id)).all()
-#         for i in requests:
-#             i.status= status
-#             i.update()
-#         return jsonify({'success': True, "comment" : ""})
-#     else:
-#         employee_name = Employee.query.get(request_first.employee_id).name
-#         fill_Ticket_table = Ticket(reply=reply,
-#                                 status=request_first.status,
-#                                 subject=request_first.subject,
-#                                 type=request_first.type,
-#                                 description=request_first.description,
-#                                 employee_id = request_first.employee_id,
-#                                 action_by=employee_name,
-#                                 date = date,
-#                                 real_id=ticket_real_id)
-#         fill_Ticket_table.insert()
+    if admin_uid :
+        if file!='2':
+            storage.child("todo_file/" + str(real_file_name)).put(file, file.mimetype)
+            url = storage.child("todo_file/" + str(real_file_name)).get_url(None)
+        else:
+            url="" 
+        admin_id = Admin.query.filter_by(uid=admin_uid).first()
+        action_by = admin_id.name
+        print(request_first.task_id)
+        fill_Todo_table = Todo(task_id=request_first.task_id,
+                            admin_id=admin_id.id,
+                            file_name =  str(real_file_name),
+                            reply=reply,
+                            subject = request_first.subject,
+                            action_by  =action_by,
+                            file  = url,
+                            real_id = real_id,
+                            date = date)
+        fill_Todo_table.insert()
+        requests = Todo.query.filter_by(real_id=real_id).all()
+        for i in requests:
+            i.status= status
+            i.update()
+        return jsonify({'success': True, "comment" : ""})
+    else:
+        if file!='2':
+            storage.child("todo_file/" + str(real_file_name)).put(file, file.mimetype)
+            url = storage.child("todo_file/" + str(file_name)).get_url(None)
+        else:
+            url="" 
+        employee_name = Employee.query.filter_by(uid=employee_uid).first()
+        fill_Todo_table = Todo(task_id=request_first.task_id,
+                            employee_id=employee_name.id,
+                            reply=reply,
+                            subject = request_first.subject,
+                            file_name =  str(real_file_name),
+                            action_by  =employee_name.name,
+                            file  = url,
+                            real_id =request_first.real_id,
+                            date = date)
+        fill_Todo_table.insert()
+        requests = Todo.query.filter_by(real_id=real_id).all()
+        for i in requests:
+            i.status= status
+            i.update()
+        return jsonify({'success': True, "comment" : "" })
+    # except:
 
-#         return jsonify({'success': True, "comment" : "" })
-#     # except:
-
-#     #     abort(422)
+    #     abort(422)
 
 @app.route('/add_task', methods=['POST'])
 def add_task():
